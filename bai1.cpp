@@ -1,46 +1,127 @@
 #include <iostream>
-#include <vector>
 #include <string>
-
 using namespace std;
 
-struct Node {
-    string title;
-    int pages;
-    int index;
-    vector<Node*> children;
-    Node(string t, int p, int idx) : title(t), pages(p), index(idx) {}
+struct Nut {
+    int chiSo;
+    string tenMuc;
+    int trangBatDau, trangKetThuc;
+    Nut* conDau;
+    Nut* anhEmKe;
+
+    Nut(int cs, string ten, int bd, int kt)
+        : chiSo(cs), tenMuc(ten),
+          trangBatDau(bd), trangKetThuc(kt),
+          conDau(nullptr), anhEmKe(nullptr) {}
 };
 
-int countChapters(Node* root) {
-    return root ? root->children.size() : 0;
+/* Them muc con */
+void themCon(Nut* cha, Nut* con) {
+    if (!cha->conDau)
+        cha->conDau = con;
+    else {
+        Nut* p = cha->conDau;
+        while (p->anhEmKe)
+            p = p->anhEmKe;
+        p->anhEmKe = con;
+    }
 }
 
-void findLongest(Node* root) {
-    if (!root || root->children.empty()) return;
-    Node* res = root->children[0];
-    for (auto c : root->children) if (c->pages > res->pages) res = c;
-    cout << "Chuong dai nhat: " << res->title << " (" << res->pages << " trang)\n";
+/* In muc luc */
+void inCay(Nut* goc, int muc = 0) {
+    if (!goc) return;
+
+    for (int i = 0; i < muc; i++) cout << "  ";
+    cout << goc->chiSo << ". " << goc->tenMuc
+         << " (" << goc->trangBatDau
+         << "-" << goc->trangKetThuc << ")\n";
+
+    inCay(goc->conDau, muc + 1);
+    inCay(goc->anhEmKe, muc);
 }
 
-bool deleteAndUpdate(Node* parent, string target) {
-    for (auto it = parent->children.begin(); it != parent->children.end(); ++it) {
-        if ((*it)->title == target) {
-            parent->pages -= (*it)->pages;
-            parent->children.erase(it);
+/* Dem so chuong */
+int demSoChuong(Nut* sach) {
+    int dem = 0;
+    Nut* p = sach->conDau;
+    while (p) {
+        dem++;
+        p = p->anhEmKe;
+    }
+    return dem;
+}
+
+/* Tim chuong dai nhat */
+Nut* timChuongDaiNhat(Nut* sach) {
+    Nut* p = sach->conDau;
+    Nut* chuongMax = nullptr;
+    int doDaiMax = -1;
+
+    while (p) {
+        int doDai = p->trangKetThuc - p->trangBatDau + 1;
+        if (doDai > doDaiMax) {
+            doDaiMax = doDai;
+            chuongMax = p;
+        }
+        p = p->anhEmKe;
+    }
+    return chuongMax;
+}
+
+/* Xoa muc theo chi so */
+bool xoaMuc(Nut* cha, int chiSo) {
+    if (!cha) return false;
+
+    Nut* truoc = nullptr;
+    Nut* hienTai = cha->conDau;
+
+    while (hienTai) {
+        if (hienTai->chiSo == chiSo) {
+            if (!truoc)
+                cha->conDau = hienTai->anhEmKe;
+            else
+                truoc->anhEmKe = hienTai->anhEmKe;
+            delete hienTai;
             return true;
         }
-        if (deleteAndUpdate(*it, target)) return true;
+        truoc = hienTai;
+        hienTai = hienTai->anhEmKe;
     }
-    return false;
+    return xoaMuc(cha->conDau, chiSo);
 }
 
+
 int main() {
-    Node* book = new Node("Giao trinh", 100, 0);
-    book->children.push_back(new Node("Chuong 1", 30, 1));
-    book->children.push_back(new Node("Chuong 2", 70, 2));
-    
-    cout << "So chuong: " << countChapters(book) << endl;
-    findLongest(book);
+    Nut* sach = new Nut(0, "CUON SACH", 1, 200);
+
+    Nut* chuong1 = new Nut(1, "Chuong 1", 1, 50);
+    Nut* chuong2 = new Nut(2, "Chuong 2", 51, 120);
+    Nut* chuong3 = new Nut(3, "Chuong 3", 121, 200);
+
+    themCon(sach, chuong1);
+    themCon(sach, chuong2);
+    themCon(sach, chuong3);
+
+    themCon(chuong1, new Nut(11, "Muc 1.1", 1, 20));
+    themCon(chuong1, new Nut(12, "Muc 1.2", 21, 50));
+
+    themCon(chuong2, new Nut(21, "Muc 2.1", 51, 80));
+    themCon(chuong2, new Nut(22, "Muc 2.2", 81, 120));
+
+    cout << " MUC LUC SACH \n";
+    inCay(sach);
+
+    cout << "\nSo chuong: " << demSoChuong(sach) << endl;
+
+    Nut* chuongDaiNhat = timChuongDaiNhat(sach);
+    cout << "Chuong dai nhat: " << chuongDaiNhat->tenMuc << endl;
+
+    cout << "\nXoa muc co chi so = 22\n";
+    xoaMuc(sach, 22);
+    inCay(sach);
+
+    cout << "\nMuc luc Chuong 1:\n";
+    inCay(chuong1, 1);
+
     return 0;
 }
