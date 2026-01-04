@@ -51,14 +51,13 @@ int demSoChuong(Nut* sach) {
     return dem;
 }
 
-/* Tim chuong dai nhat */
 Nut* timChuongDaiNhat(Nut* sach) {
     Nut* p = sach->conDau;
     Nut* chuongMax = nullptr;
     int doDaiMax = -1;
 
     while (p) {
-        int doDai = p->trangKetThuc - p->trangBatDau + 1;
+        int dgit pushoDai = p->trangKetThuc - p->trangBatDau + 1;
         if (doDai > doDaiMax) {
             doDaiMax = doDai;
             chuongMax = p;
@@ -68,7 +67,6 @@ Nut* timChuongDaiNhat(Nut* sach) {
     return chuongMax;
 }
 
-/* Xoa muc theo chi so */
 bool xoaMuc(Nut* cha, int chiSo) {
     if (!cha) return false;
 
